@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import personService from "./services/persons"
 import Filter from "./Filter"
 import PersonForm from "./PersonForm"
 import Persons from "./Persons"
 
 const App = () => {
     const [persons, setPersons] = useState([])
-    
+
     const [newName, setNewName] = useState('')
     const [newNumber, setNewNumber] = useState('')
 
@@ -19,9 +19,9 @@ const App = () => {
     }
 
     useEffect(() => {
-        axios.get('http://localhost:3001/persons').then(response => {
-            setPersons(response.data)
-            updatePersonsToShow(filter, response.data)
+        personService.getAll().then(returnedPersons => {
+            setPersons(returnedPersons)
+            updatePersonsToShow(filter, returnedPersons)
         })
     }, [])
 
@@ -34,8 +34,20 @@ const App = () => {
     const addPerson = (event) => {
         event.preventDefault()
 
-        if (persons.find(person => person.name === newName)) {
-            window.alert(`${newName} is already added to phonebook`)
+        const foundPerson = persons.find(person => person.name === newName)
+
+        if (foundPerson) {
+            if (window.confirm(`${newName} is already in the phonebook. Do you want to update their number?`)) {
+                const updatedPerson = { ...foundPerson, number: newNumber }
+                personService.update(updatedPerson.id, updatedPerson).then(returnedPerson => {
+                    const updatedPersons = persons.map(person => person.id != returnedPerson.id ? person : returnedPerson)
+                    setPersons(updatedPersons)
+                    updatePersonsToShow(filter, updatedPersons)
+                }).catch(error => {
+                    console.log(error)
+                    alert(`Couldn't update ${newName}'s number.`)
+                })
+            }
         } else {
 
             const newPerson = {
@@ -43,14 +55,32 @@ const App = () => {
                 number: newNumber
             }
 
-            const newPersons = persons.concat(newPerson)
-
-            setPersons(newPersons)
-            updatePersonsToShow(filter, newPersons)
+            personService.create(newPerson).then(returnedPerson => {
+                const newPersons = persons.concat(returnedPerson)
+                setPersons(newPersons)
+                updatePersonsToShow(filter, newPersons)
+            }).catch(error => {
+                console.log(error)
+                alert(`Couldn't add ${newName} to the phonebook.`)
+            })
         }
+
 
         setNewName('')
         setNewNumber('')
+    }
+
+    const deletePerson = (deleted) => {
+        if (window.confirm(`Delete ${deleted.name}?`)) {
+            personService.deletePerson(deleted.id).then(response => {
+                const deletedPersons = persons.filter(person => person.id != deleted.id)
+                setPersons(deletedPersons)
+                updatePersonsToShow(filter, deletedPersons)
+            }).catch(error => {
+                console.log(error)
+                alert(`Couldn't delete ${deleted.name} from the phonebook.`)
+            })
+        }
     }
 
     const handleNameChange = (event) => setNewName(event.target.value)
@@ -63,7 +93,7 @@ const App = () => {
             <h3>Add a new</h3>
             <PersonForm newName={newName} nameChange={handleNameChange} newNumber={newNumber} numberChange={handleNumberChange} submit={addPerson} />
             <h3>Numbers</h3>
-            <Persons persons={personsToShow} />
+            <Persons persons={personsToShow} deletePerson={deletePerson} />
         </div>
     )
 }
