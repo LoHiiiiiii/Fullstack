@@ -35,28 +35,25 @@ const App = () => {
         event.preventDefault()
 
         const foundPerson = persons.find(person => person.name === newName)
+        
+        const newPerson = {
+            name: newName,
+            number: newNumber
+        }
 
         if (foundPerson) {
-            /*if (window.confirm(`${newName} is already in the phonebook. Do you want to update their number?`)) {
-                const updatedPerson = { ...foundPerson, number: newNumber }
-                personService.update(updatedPerson.id, updatedPerson).then(returnedPerson => {
-                    const updatedPersons = persons.map(person => person.id != returnedPerson.id ? person : returnedPerson)
+            newPerson.id = foundPerson.id
+            if (window.confirm(`${newName} is already in the phonebook. Do you want to update their number?`)) {
+                personService.update(newPerson.id, newPerson).then(returnedPerson => {
+                    const updatedPersons = persons.map(person => person.id !== newPerson.id ? person : newPerson)
                     setPersons(updatedPersons)
                     updatePersonsToShow(filter, updatedPersons)
                 }).catch(error => {
                     console.log(error)
                     alert(`Couldn't update ${newName}'s number.`)
                 })
-            }*/
-
-            alert(`Couldn't update ${newName}'s number.`)
-            return
-        } else {
-
-            const newPerson = {
-                name: newName,
-                number: newNumber
             }
+        } else {
 
             personService.create(newPerson).then(returnedPerson => {
                 const newPersons = persons.concat(returnedPerson)
@@ -67,8 +64,7 @@ const App = () => {
                 alert(`Couldn't add ${newName} to the phonebook.`)
             })
         }
-
-
+        
         setNewName('')
         setNewNumber('')
     }
