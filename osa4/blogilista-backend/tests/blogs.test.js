@@ -6,10 +6,23 @@ const Blog = require('../models/blog')
 
 const api = supertest(app)
 
+let token = ""
+
 beforeEach(async () => {
     await Blog.deleteMany({})
     await Blog.insertMany(helper.initialBlogs)
+
+    const user = {
+        username: "Valid username 2",
+        password: "Valid password"
+    }
+
+    await api.post('/api/users').send(user)
+    const response = await api.post('/api/login').send(user)
+    token = `Bearer ${response.body.token}`
 })
+
+
 
 describe('getting all blogs', () => {
     test('returns correct amount', async () => {
@@ -24,6 +37,7 @@ describe('getting all blogs', () => {
 })
 
 describe('posting blogs', () => {
+    
     test('functions correctly', async () => {
         const newBlog = {
             title: "Test Blog",
@@ -32,7 +46,7 @@ describe('posting blogs', () => {
             likes: 3
         }
 
-        const postResponse = await api.post('/api/blogs').send(newBlog)
+        const postResponse = await api.post('/api/blogs').send(newBlog).set('Authorization', token)
         expect(postResponse.body).toMatchObject(newBlog)
 
         const getResponse = await api.get('/api/blogs')
@@ -47,7 +61,7 @@ describe('posting blogs', () => {
             url: "urli",
         }
 
-        const response = await api.post('/api/blogs').send(newBlog)
+        const response = await api.post('/api/blogs').send(newBlog).set('Authorization', token)
         expect(response.body.likes).toBeDefined()
         expect(response.body.likes).toBe(0)
     })
@@ -56,7 +70,7 @@ describe('posting blogs', () => {
         const newBlog = {
         }
 
-        const response = await api.post('/api/blogs').send(newBlog)
+        const response = await api.post('/api/blogs').send(newBlog).set('Authorization', token)
         expect(response.status).toBe(400)
     })
 
@@ -65,30 +79,55 @@ describe('posting blogs', () => {
             title: "Urlless"
         }
 
-        const response = await api.post('/api/blogs').send(newBlog)
+        const response = await api.post('/api/blogs').send(newBlog).set('Authorization', token)
         expect(response.status).toBe(400)
     })
 })
 
 describe('deleting blogs', () => {
-    test('with invalid id receives status 400', async () => {
+    let postResponse = ""
 
-        const response = await api.delete('/api/blogs/0')
+    beforeEach(async () => {
+        const newBlog = {
+            title: "Test Blog",
+            author: "Me",
+            url: "urli",
+            likes: 3
+        }
+
+        postResponse = await api.post('/api/blogs').send(newBlog).set('Authorization', token)
+    })
+
+    test('with invalid id receives status 400', async () => {
+        const response = await api.delete(`/api/blogs/0`).set('Authorization', token)
         expect(response.status).toBe(400)
     })
 
 
     test('with a valid id receives status 204', async () => {
-        const response = await api.delete(`/api/blogs/${helper.initialBlogs[0]._id}`)
+        const response = await api.delete(`/api/blogs/${postResponse.body.id}`).set('Authorization', token)
         expect(response.status).toBe(204)
     })
 })
 
 describe('putting blogs', () => {
+    let postResponse = ""
+    
+    beforeEach(async () => {
+        const newBlog = {
+            title: "Test Blog",
+            author: "Me",
+            url: "urli",
+            likes: 3
+        }
+
+        postResponse = await api.post('/api/blogs').send(newBlog).set('Authorization', token)
+    })
+
     test('with invalid id receives status 400', async () => {
         const newBlog = {}
 
-        const response = await api.put('/api/blogs/0').send(newBlog)
+        const response = await api.put('/api/blogs/0').set('Authorization', token).send(newBlog)
         expect(response.status).toBe(400)
     })
 
@@ -100,48 +139,36 @@ describe('putting blogs', () => {
             likes: 3
         }
 
-        const response = await api.put('/api/blogs/0').send(newBlog)
+        const response = await api.put('/api/blogs/0').set('Authorization', token).send(newBlog)
         expect(response.status).toBe(400)
     })
 
     test('with no url receives status 400', async () => {
         const newBlog = {
-            title: "Test Blog",
+            title: "Put Blog",
             author: "Me",
             url: "",
             likes: 3
         }
 
-        const response = await api.put('/api/blogs/0').send(newBlog)
+        const response = await api.put('/api/blogs/0').set('Authorization', token).send(newBlog)
         expect(response.status).toBe(400)
     })
 
-    test('with a valid id receives status 200', async () => {
+    test('with a valid id functions', async () => {
+
         const newBlog = {
-            title: "Test Blog",
+            title: "Put blog",
             author: "Me",
             url: "urli",
             likes: 3
         }
 
-        const response = await api.put(`/api/blogs/${helper.initialBlogs[0]._id}`).send(newBlog)
-        expect(response.status).toBe(200)
-    })
-
-    test('with a valid id receives proper blog', async () => {
-        const newBlog = {
-            title: "Test Blog",
-            author: "Me",
-            url: "urli",
-            likes: 3
-        }
-
-        const putResponse = await api.put(`/api/blogs/${helper.initialBlogs[0]._id}`).send(newBlog)
-        expect(putResponse.body).toMatchObject(newBlog)
+        const putResponse = await api.put(`/api/blogs/${postResponse.body.id}`).set('Authorization', token).send(newBlog)
+        expect(putResponse.status).toBe(200)
         const getResponse = await api.get('/api/blogs')
         expect(getResponse.body).toContainEqual(putResponse.body)
     })
-
 
 })
 
