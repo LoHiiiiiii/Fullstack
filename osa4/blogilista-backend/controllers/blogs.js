@@ -11,17 +11,19 @@ blogsRouter.delete('/:id', async (request, response) => {
         response.status(401).json({
             error: "Token missing or invalid!"
         })
+        return
     }
 
     if (!request.user) {
         response.status(401).json({
             error: "User no longer exists!"
         })
+        return
     }
 
     try {
         const blogToRemove = await Blog.findById(request.params.id)
-        if (request.user._id.toString() !== blogToRemove.user.toString()) {
+        if (blogToRemove.user && request.user._id.toString() !== blogToRemove.user.toString()) {
             response.status(401).json({
                 error: "Can't remove a blog that isn't associated with this user!"
             })
@@ -41,12 +43,14 @@ blogsRouter.put('/:id', async (request, response) => {
         response.status(401).json({
             error: "Token missing or invalid!"
         })
+        return
     }
 
     if (!request.user) {
         response.status(401).json({
             error: "User no longer exists!"
         })
+        return
     }
 
     const blog = {
