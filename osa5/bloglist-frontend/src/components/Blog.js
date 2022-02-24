@@ -2,7 +2,7 @@ import { useState } from 'react'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-const Blog = ({ blog , addLike, deleteBlog }) => {
+const Blog = ({ blog, addLike, deleteBlog }) => {
     const [expanded, setExpanded] = useState(false)
     const blogStyle = {
         paddingTop: 10,
@@ -12,35 +12,39 @@ const Blog = ({ blog , addLike, deleteBlog }) => {
         marginBottom: 5
     }
 
-    if (!expanded) {
-        return (
-            <div style={blogStyle}>
-                {blog.title} {blog.author}
-                <button onClick={() => { setExpanded(true) }}>view</button>
-            </div>
-        )
-    } else {
+    const showWhenExpanded = { display: (expanded) ? '' : 'none' }
+    const hideWhenExpanded = { display: (expanded) ? 'none' : '' }
 
-        return (
-            <div style={blogStyle}>
-                <div>
-                    {blog.title} {blog.author}
-                    <button onClick={() => { setExpanded(true) }}>hide</button>
-                </div>
+    return (
+        <div style={blogStyle}>
+            {blog.title} {blog.author}
+            <button style={hideWhenExpanded} onClick={() => { setExpanded(true) }} id='viewButton'>view</button>
+            <button style={showWhenExpanded} onClick={() => { setExpanded(false) }} id='hideButton'>hide</button>
+            <div style={showWhenExpanded} className='expandedBlog'>
                 <div>
                     {blog.url}
                 </div>
-                <div style={(!blog.user) ? { display: 'none' } : {}}>
+                <div
+                    style={(!blog.user) ? { display: 'none' } : {}}
+                    className='likes'
+                >
                     likes {blog.likes}
-                    <button onClick={addLike}> like</button>
+                    <button
+                        onClick={addLike}
+                        id='likeButton'
+                    >
+                        add a like
+                    </button>
                 </div>
                 <div>
                     {(blog.user) ? ((blog.user.name) ? blog.user.name : 'Nameless user') : 'Unknown user'}
                 </div>
-                <button onClick={deleteBlog}> remove</button>
+                <button
+                    onClick={deleteBlog}
+                    id='removeButton'
+                > remove</button>
             </div>
-        )
-    }
+        </div>)
 }
 
 Blog.propTypes = {

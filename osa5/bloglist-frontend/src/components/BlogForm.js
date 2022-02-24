@@ -26,7 +26,10 @@ const BlogForm = ({ createBlog }) => {
 
     return (<>
         <div style={hideWhenVisible}>
-            <button onClick={() => { setVisible(true) }}>create new</button>
+            <button
+                onClick={() => { setVisible(true) }}
+                id='createButton'
+            >create new</button>
         </div>
         <div style={showWhenVisible}>
             <h2>create new</h2>
@@ -36,24 +39,30 @@ const BlogForm = ({ createBlog }) => {
                     title:
                     <input
                         value={title}
-                        onChange={({ target }) => { setTitle(target.value)}}
+                        onChange={({ target }) => { setTitle(target.value) }}
+                        id='titleField'
                     />
                 </div>
                 <div>
                     author:
                     <input
                         value={author}
-                        onChange={({ target }) => { setAuthor(target.value)}}
+                        onChange={({ target }) => { setAuthor(target.value) }}
+                        id='authorField'
                     />
                 </div>
                 <div>
                     url:
                     <input
                         value={url}
-                        onChange={({ target }) => { setUrl(target.value)}}
+                        onChange={({ target }) => { setUrl(target.value) }}
+                        id='urlField'
                     />
                 </div>
-                <button type="submit">create</button>
+                <button
+                    type='submit'
+                    id='submitButton'
+                >create</button>
             </form>
         </div>
     </>)

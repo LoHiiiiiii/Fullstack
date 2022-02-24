@@ -143,14 +143,16 @@ const App = () => {
                     </p>
                 </div>
                 <BlogForm createBlog={createBlog} />
-                {blogs.map(blog =>
-                    <Blog
-                        key={ blog.id }
-                        blog={ blog }
-                        addLike={() => { addLike(blog) }}
-                        deleteBlog={() => { deleteBlog(blog) }}
-                    />
-                )}
+                <div id='blogList'>
+                    {blogs.map(blog =>
+                        <Blog
+                            key={blog.id}
+                            blog={blog}
+                            addLike={() => { addLike(blog) }}
+                            deleteBlog={() => { deleteBlog(blog) }}
+                        />
+                    )}
+                </div>
             </div>
         )
     }
@@ -166,6 +168,7 @@ const App = () => {
                         type='text'
                         value={username}
                         name='Username'
+                        id='username'
                         onChange={({ target }) => setUsername(target.value)}
                     />
                 </div>
@@ -175,10 +178,14 @@ const App = () => {
                         type='password'
                         value={password}
                         name='Password'
+                        id='password'
                         onChange={({ target }) => setPassword(target.value)}
                     />
                 </div>
-                <button type='submit'>login</button>
+                <button
+                    type='submit'
+                    id='loginButton'
+                >login</button>
             </form>
         </div>
     )
