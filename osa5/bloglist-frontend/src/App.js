@@ -28,8 +28,12 @@ const App = () => {
 
     useEffect(() => {
         async function getBlogs() {
-            const blogs = await blogService.getAll()
-            setBlogSorted(blogs)
+            try {
+                const blogs = await blogService.getAll()
+                setBlogSorted(blogs)
+            } catch (exception) {
+                console.log(exception.message)
+            }
         }
 
         getBlogs()
@@ -54,8 +58,8 @@ const App = () => {
             setPassword('')
             window.localStorage.setItem('loggedBlogappUser', JSON.stringify(user))
         } catch (exception) {
-            if (exception.message.includes('401')) setWarningMessage("Wrong username or password")
-            else setWarningMessage("Can't reach server")
+            if (exception.message.includes('401')) setWarningMessage('Wrong username or password')
+            else setWarningMessage('Can not reach server')
             setTimeout(() => { setWarningMessage(null) }, 5000)
         }
     }
@@ -77,12 +81,12 @@ const App = () => {
                     setBlogSorted(blogs)
                 } catch (exception) {
                     console.log(exception.message)
-                    setWarningMessage("failed to fetch blogs")
+                    setWarningMessage('failed to fetch blogs')
                     setTimeout(() => { setWarningMessage(null) }, 5000)
                 }
             } catch (exception) {
                 console.log(exception.message)
-                setWarningMessage("failed to create blog")
+                setWarningMessage('failed to create blog')
                 setTimeout(() => { setWarningMessage(null) }, 5000)
             }
 
@@ -114,7 +118,7 @@ const App = () => {
         const deleteBlog = async (blog) => {
             if (window.confirm(`Remove blog "${blog.title}" by ${blog.author}`)) {
                 try {
-                    const response = await blogService.remove(blog.id)
+                    await blogService.remove(blog.id)
                     setNotificationMessage(`Removed blog "${blog.title}" by ${blog.author}`)
                     setTimeout(() => { setNotificationMessage(null) }, 5000)
                     const blogs = await blogService.getAll()
@@ -141,8 +145,8 @@ const App = () => {
                 <BlogForm createBlog={createBlog} />
                 {blogs.map(blog =>
                     <Blog
-                        key={blog.id}
-                        blog={blog}
+                        key={ blog.id }
+                        blog={ blog }
                         addLike={() => { addLike(blog) }}
                         deleteBlog={() => { deleteBlog(blog) }}
                     />
@@ -159,22 +163,22 @@ const App = () => {
                 <div>
                     username
                     <input
-                        type="text"
+                        type='text'
                         value={username}
-                        name="Username"
+                        name='Username'
                         onChange={({ target }) => setUsername(target.value)}
                     />
                 </div>
                 <div>
                     password
                     <input
-                        type="password"
+                        type='password'
                         value={password}
-                        name="Password"
+                        name='Password'
                         onChange={({ target }) => setPassword(target.value)}
                     />
                 </div>
-                <button type="submit">login</button>
+                <button type='submit'>login</button>
             </form>
         </div>
     )

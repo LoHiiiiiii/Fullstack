@@ -9,7 +9,7 @@ const setToken = newToken => {
 
 const getAll = async () => {
     const response = await axios.get(baseUrl)
-  return response.data
+    return response.data
 }
 
 const create = async newObject => {
@@ -30,4 +30,4 @@ const remove = async (id) => {
     return response.data
 }
 
-export default { setToken, getAll, create, update, remove}
+export default { setToken, getAll, create, update, remove }
