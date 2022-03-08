@@ -1,35 +1,47 @@
+import { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { voteAnecdote } from '../reducers/anecdoteReducer'
-import { setNotification, hideNotification } from '../reducers/notificationReducer'
+import { initializeAnecdotes, voteAnecdote } from '../reducers/anecdoteReducer'
+import { showNotification } from '../reducers/notificationReducer'
 
 const AnecdoteList = () => {
+    const dispatch = useDispatch()
+
+    useEffect(() => {
+        dispatch(initializeAnecdotes())
+    }, [dispatch])
+
     const anecdotes = useSelector(state => {
         if (!state.filter) return state.anecdotes
         return state.anecdotes.filter(anecdote => anecdote.content.toLowerCase().includes(state.filter.toLowerCase()))
     })
 
-    const dispatch = useDispatch()
+    console.log(anecdotes)
 
-    const vote = (id, content, votes) => {
+    const anecdoteSorter = function (a, b) {
+        return b.votes - a.votes
+    }
+
+    const sortedAnecdotes = [...anecdotes].sort(anecdoteSorter)
+
+    const vote = (id, content) => {
         console.log('vote', id)
         dispatch(voteAnecdote(id))
-        const notification = `"${content}" now has ${votes + 1} ${votes === 0 ? "vote" : "votes"}`
-        dispatch(setNotification(notification))
-        setTimeout(() => {
-            dispatch(hideNotification(notification))
-        }, 5000)
+        dispatch(showNotification(
+            `you voted "${content}"`,
+            5000
+        ))
     }
 
     return (<>
         {
-            anecdotes.map(anecdote =>
+            sortedAnecdotes.map(anecdote =>
                 <div key={anecdote.id}>
                     <div>
                         {anecdote.content}
                     </div>
                     <div>
                         has {anecdote.votes}
-                        <button onClick={() => vote(anecdote.id, anecdote.content, anecdote.votes)}>vote</button>
+                        <button onClick={() => vote(anecdote.id, anecdote.content)}>vote</button>
                     </div>
                 </div>
             )
