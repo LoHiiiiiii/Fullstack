@@ -3,9 +3,14 @@ import personService from "./services/persons"
 import Filter from "./Filter"
 import PersonForm from "./PersonForm"
 import Persons from "./Persons"
+import Notification from "./Notification"
 
 const App = () => {
     const [persons, setPersons] = useState([])
+
+    const [error, setError] = useState('')
+    const [message, setMessage] = useState('')
+
 
     const [newName, setNewName] = useState('')
     const [newNumber, setNewNumber] = useState('')
@@ -31,6 +36,17 @@ const App = () => {
         setPersonsToShow(filtered)
     }
 
+    const handleError = (errorMessage) => {
+        //alert(errorMessage)
+        setError(errorMessage)
+        setTimeout(() => { setError(null) }, 5000)
+    }
+
+    const handleMessage = (successMessage) => {
+        setMessage(successMessage)
+        setTimeout(() => { setMessage(null) }, 5000)
+    }
+
     const addPerson = (event) => {
         event.preventDefault()
 
@@ -43,9 +59,10 @@ const App = () => {
                     const updatedPersons = persons.map(person => person.id != returnedPerson.id ? person : returnedPerson)
                     setPersons(updatedPersons)
                     updatePersonsToShow(filter, updatedPersons)
+                    handleMessage(`Successfully updated ${ newName }'s number!`)
                 }).catch(error => {
                     console.log(error)
-                    alert(`Couldn't update ${newName}'s number.`)
+                    handleError(`Couldn't update ${newName}'s number.`)
                 })
             }
         } else {
@@ -59,9 +76,10 @@ const App = () => {
                 const newPersons = persons.concat(returnedPerson)
                 setPersons(newPersons)
                 updatePersonsToShow(filter, newPersons)
+                handleMessage(`Successfully added ${newName}!`)
             }).catch(error => {
                 console.log(error)
-                alert(`Couldn't add ${newName} to the phonebook.`)
+                handleError(`Couldn't add ${newName} to the phonebook.`)
             })
         }
 
@@ -76,9 +94,10 @@ const App = () => {
                 const deletedPersons = persons.filter(person => person.id != deleted.id)
                 setPersons(deletedPersons)
                 updatePersonsToShow(filter, deletedPersons)
+                handleMessage(`Successfully deleted ${deleted}!`)
             }).catch(error => {
                 console.log(error)
-                alert(`Couldn't delete ${deleted.name} from the phonebook.`)
+                handleError(`Couldn't delete ${deleted.name} from the phonebook.`)
             })
         }
     }
@@ -89,6 +108,8 @@ const App = () => {
     return (
         <div>
             <h2>Phonebook</h2>
+            <Notification name="error" message={error} />
+            <Notification name="message" message={message} />
             <Filter filter={filter} filterChange={handleFilterChange} />
             <h3>Add a new</h3>
             <PersonForm newName={newName} nameChange={handleNameChange} newNumber={newNumber} numberChange={handleNumberChange} submit={addPerson} />
