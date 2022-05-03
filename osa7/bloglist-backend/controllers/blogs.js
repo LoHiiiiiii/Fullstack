@@ -1,5 +1,6 @@
 const blogsRouter = require("express").Router()
 const Blog = require("../models/blog")
+const User = require("../models/user")
 
 blogsRouter.get("", async (request, response) => {
     const blogs = await Blog.find({}).populate("user", { username: 1, name: 1 })
@@ -34,6 +35,9 @@ blogsRouter.delete("/:id", async (request, response) => {
         }
 
         await Blog.findByIdAndRemove(request.params.id)
+        const user = await User.findById(request.user._id)
+        user.blogs = user.blogs.filter(blog => blog._id != request.params.id)
+        await user.save()
         response.status(204).end()
     } catch (exception) {
         console.log(exception)
@@ -61,6 +65,7 @@ blogsRouter.put("/:id", async (request, response) => {
         author: request.body.author,
         url: request.body.url,
         likes: request.body.likes,
+        comments: request.body.comments,
         user: request.user._id,
     }
 
@@ -79,6 +84,8 @@ blogsRouter.put("/:id", async (request, response) => {
     }
 
     if (!blog.likes) blog.likes = 0
+    if (!blog.comments) blog.comments = []
+
 
     try {
         const blogToUpdate = await Blog.findById(request.params.id)
@@ -133,8 +140,13 @@ blogsRouter.post("", async (request, response) => {
 
     if (!blog.likes) blog.likes = 0
 
+
     const result = await blog.save()
     await result.populate("user", { username: 1, name: 1 })
+
+    const user = await User.findById(request.user._id)
+    user.blogs = user.blogs.concat(result._id)
+    await user.save()
     response.status(201).json(result)
 })
 

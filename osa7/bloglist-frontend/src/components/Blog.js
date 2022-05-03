@@ -1,43 +1,21 @@
 import { useState } from 'react'
-import PropTypes from 'prop-types'
 import React from 'react'
 
-const Blog = ({ blog, addLike, deleteBlog }) => {
-    const [expanded, setExpanded] = useState(false)
-    const blogStyle = {
-        paddingTop: 10,
-        paddingLeft: 2,
-        border: 'solid',
-        borderWidth: 1,
-        marginBottom: 5,
+const Blog = ({ blog, addLike, deleteBlog, addComment }) => {
+    if (!blog) return null
+
+    const [comment, setComment] = useState('')
+
+    const submitComment = () => {
+        addComment(comment)
+        setComment('')
     }
 
-    const showWhenExpanded = { display: expanded ? '' : 'none' }
-    const hideWhenExpanded = { display: expanded ? 'none' : '' }
-
     return (
-        <div style={blogStyle}>
-            {blog.title} {blog.author}
-            <button
-                style={hideWhenExpanded}
-                onClick={() => {
-                    setExpanded(true)
-                }}
-                id="viewButton"
-            >
-                view
-            </button>
-            <button
-                style={showWhenExpanded}
-                onClick={() => {
-                    setExpanded(false)
-                }}
-                id="hideButton"
-            >
-                hide
-            </button>
-            <div style={showWhenExpanded} className="expandedBlog">
-                <div>{blog.url}</div>
+        <div>
+            <h2>{blog.title} {blog.author}</h2>
+            <div>
+                <a href={'//'+ blog.url}>{blog.url}</a>
                 <div
                     style={!blog.user ? { display: 'none' } : {}}
                     className="likes"
@@ -47,26 +25,36 @@ const Blog = ({ blog, addLike, deleteBlog }) => {
                         add a like
                     </button>
                 </div>
-                <div>
-                    {blog.user
+                <div>added by {blog.user
+                    ? blog.user.name
                         ? blog.user.name
-                            ? blog.user.name
-                            : 'Nameless user'
-                        : 'Unknown user'}
+                        : 'Nameless user'
+                    : 'Unknown user'}
                 </div>
                 <button onClick={deleteBlog} id="removeButton">
                     {' '}
                     remove
                 </button>
+
+                <h3>comments</h3>
+                <div>
+                    <input
+                        value={comment}
+                        onChange={({ target }) => {
+                            setComment(target.value)
+                        }}
+                        id='commentField'
+                    />
+                    <button onClick={submitComment} id="submitButton">
+                        add comment
+                    </button>
+                </div>
+                <ul>
+                    {blog.comments.map(comment => <li key={comment}> {comment} </li>)}
+                </ul>
             </div>
         </div>
     )
-}
-
-Blog.propTypes = {
-    blog: PropTypes.object.isRequired,
-    addLike: PropTypes.func.isRequired,
-    deleteBlog: PropTypes.func.isRequired,
 }
 
 export default Blog

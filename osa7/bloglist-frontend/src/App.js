@@ -1,18 +1,27 @@
 import React, { useState, useEffect } from 'react'
+import BlogList from './components/BlogList'
 import Blog from './components/Blog'
 import Notification from './components/Notification'
 import Warning from './components/Warning'
 import BlogForm from './components/BlogForm'
+import Menu from './components/Menu'
+import UserList from './components/UserList'
+import User from './components/User'
 import blogService from './services/blogs'
 import loginService from './services/login'
+import userService from './services/users'
 import { useDispatch } from 'react-redux'
 import { showNotification } from './reducers/notificationReducer'
+import {
+    Routes, Route, useMatch, useNavigate
+} from 'react-router-dom'
 
 const App = () => {
     const [blogs, setBlogs] = useState([])
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [user, setUser] = useState(null)
+    const [users, setUsers] = useState([])
     const [warningMessage, setWarningMessage] = useState(null)
 
     const dispatch = useDispatch()
@@ -37,6 +46,19 @@ const App = () => {
         }
 
         getBlogs()
+    }, [])
+
+    useEffect(() => {
+        async function getUsers() {
+            try {
+                const users = await userService.getAll()
+                setUsers(users)
+            } catch (exception) {
+                console.log(exception.message)
+            }
+        }
+
+        getUsers()
     }, [])
 
     useEffect(() => {
@@ -70,8 +92,13 @@ const App = () => {
         }
     }
 
+    const navigate = useNavigate()
+    const matchUser = useMatch('/users/:id')
+    const matchBlog = useMatch('/blogs/:id')
+
     const handleLogout = () => {
         window.localStorage.removeItem('loggedBlogappUser')
+        navigate('/')
     }
 
     if (user) {
@@ -79,12 +106,14 @@ const App = () => {
             try {
                 const response = await blogService.create(newBlog)
                 dispatch(showNotification(
-                    `a new blog "${response.title}" by ${response.author}`,
+                    `a new blog '${response.title}' by ${response.author}`,
                     5000
                 ))
                 try {
                     const blogs = await blogService.getAll()
                     setBlogSorted(blogs)
+                    const users = await userService.getAll()
+                    setUsers(users)
                 } catch (exception) {
                     console.log(exception.message)
                     setWarningMessage('failed to fetch blogs')
@@ -108,17 +137,44 @@ const App = () => {
                 title: blog.title,
                 author: blog.author,
                 url: blog.url,
+                comments: blog.comments,
             }
 
             try {
                 const response = await blogService.update(blog.id, modifiedBlog)
                 console.log('Liked!')
-                dispatch(showNotification(`Liked blog "${response.title}"`, 5000))
+                dispatch(showNotification(`Liked blog '${response.title}'`, 5000))
                 const blogs = await blogService.getAll()
                 setBlogSorted(blogs)
             } catch (exception) {
                 console.log(exception.message)
-                setWarningMessage(`failed to like blog "${blog.title}"`)
+                setWarningMessage(`failed to like blog '${blog.title}'`)
+                setTimeout(() => {
+                    setWarningMessage(null)
+                }, 5000)
+            }
+        }
+
+        const addComment = async (blog, comment) => {
+            const modifiedBlog = {
+                user: blog.user.id,
+                likes: blog.likes,
+                title: blog.title,
+                author: blog.author,
+                url: blog.url,
+                comments: blog.comments.concat(comment)
+            }
+            console.log(modifiedBlog.comments)
+
+            try {
+                const response = await blogService.update(blog.id, modifiedBlog)
+                console.log('Commented!')
+                dispatch(showNotification(`Commented blog '${response.title}'`, 5000))
+                const blogs = await blogService.getAll()
+                setBlogSorted(blogs)
+            } catch (exception) {
+                console.log(exception.message)
+                setWarningMessage(`failed to comment blog '${blog.title}'`)
                 setTimeout(() => {
                     setWarningMessage(null)
                 }, 5000)
@@ -127,19 +183,22 @@ const App = () => {
 
         const deleteBlog = async (blog) => {
             if (
-                window.confirm(`Remove blog "${blog.title}" by ${blog.author}`)
+                window.confirm(`Remove blog '${blog.title}' by ${blog.author}`)
             ) {
                 try {
                     await blogService.remove(blog.id)
                     dispatch(showNotification(
-                        `Removed blog "${blog.title}" by ${blog.author}`,
+                        `Removed blog '${blog.title}' by ${blog.author}`,
                         5000
                     ))
                     const blogs = await blogService.getAll()
                     setBlogSorted(blogs)
+                    const users = await userService.getAll()
+                    setUsers(users)
+                    navigate('/')
                 } catch (exception) {
                     console.log(exception.message)
-                    setWarningMessage(`failed to remove blog "${blog.title}"`)
+                    setWarningMessage(`failed to remove blog '${blog.title}'`)
                     setTimeout(() => {
                         setWarningMessage(null)
                     }, 5000)
@@ -147,32 +206,36 @@ const App = () => {
             }
         }
 
+        const links = [
+            {
+                address: '/',
+                name: 'blogs'
+            },
+            {
+                address: '/users',
+                name: 'users'
+            }
+        ]
+
+        const matchedUser = matchUser ? users.find(user => user.id === matchUser.params.id) : null
+        const matchedBlog = matchBlog ? blogs.find(blog => blog.id === matchBlog.params.id) : null
+
         return (
             <div>
-                <h2>blogs</h2>
+                <Menu links={links} name={user.name} handleLogout={handleLogout} />
+                <h2>blog app</h2>
                 <Warning message={warningMessage} />
                 <Notification />
-                <div>
-                    <p>
-                        {user.name} logged in
-                        <button onClick={handleLogout}>logout</button>
-                    </p>
-                </div>
-                <BlogForm createBlog={createBlog} />
-                <div id="blogList">
-                    {blogs.map((blog) => (
-                        <Blog
-                            key={blog.id}
-                            blog={blog}
-                            addLike={() => {
-                                addLike(blog)
-                            }}
-                            deleteBlog={() => {
-                                deleteBlog(blog)
-                            }}
-                        />
-                    ))}
-                </div>
+                <Routes>
+                    <Route path='/' element={
+                        <div>
+                            <BlogForm createBlog={createBlog} />
+                            <BlogList blogs={blogs} />
+                        </div>} />
+                    <Route path='/blogs/:id' element={<Blog blog={matchedBlog} addLike={() => { addLike(matchedBlog) }} deleteBlog={() => { deleteBlog(matchedBlog) }} addComment={(comment) => { addComment(matchedBlog, comment) }} />} />
+                    <Route path='/users/:id' element={<User user={matchedUser} />} />
+                    <Route path='/users' element={<UserList users={users} />} />
+                </Routes>
             </div>
         )
     }
@@ -185,24 +248,24 @@ const App = () => {
                 <div>
                     username
                     <input
-                        type="text"
+                        type='text'
                         value={username}
-                        name="Username"
-                        id="username"
+                        name='Username'
+                        id='username'
                         onChange={({ target }) => setUsername(target.value)}
                     />
                 </div>
                 <div>
                     password
                     <input
-                        type="password"
+                        type='password'
                         value={password}
-                        name="Password"
-                        id="password"
+                        name='Password'
+                        id='password'
                         onChange={({ target }) => setPassword(target.value)}
                     />
                 </div>
-                <button type="submit" id="loginButton">
+                <button type='submit' id='loginButton'>
                     login
                 </button>
             </form>
