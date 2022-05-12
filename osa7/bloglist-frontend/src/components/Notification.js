@@ -10,7 +10,7 @@ const Notification = ({ notification }) => {
         borderWidth: 1,
     }
 
-    return <div style={style}>{notification}</div>
+    return <div className="notification" style={style}>{notification}</div>
 }
 
 const mapStateToProps = (state) => {
